@@ -1,0 +1,2 @@
+#compdef spacman
+. /usr/share/zsh/site-functions/_pacman

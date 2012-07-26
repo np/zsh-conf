@@ -1,0 +1,4 @@
+My Zsh configuration:
+
+To use it simply copy or link the rc file to ~/.zshrc and the repo itself
+should be at ~/.zsh

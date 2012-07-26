@@ -1,0 +1,322 @@
+##
+## .zshrc
+##
+## Made by Nicolas Pouillard  <nicolas.pouillard@gmail.com>
+##
+
+# Search path for the cd command
+# Use hard limits, except for a smaller stack and no core dumps
+unlimit
+limit stack 8192
+limit core 0
+limit -s
+umask 022
+setenv() { typeset -x "${1}${1:+=}${(@)argv[2,$#]}" }  # csh compatibility
+freload() { while (( $# )); do; unfunction $1; autoload -U $1; shift; done }
+# Where to look for autoloaded function definitions
+# Autoload all shell functions from all directories in $fpath (following
+# symlinks) that have the executable bit on (the executable bit is not
+# necessary, but gives you an easy way to stop the autoloading of a
+# particular shell function). $fpath should not be empty for this to work.
+# automatically remove duplicates from these arrays
+
+#==============================  PATH SECTION  ================================#
+fpath=($fpath ~/.zsh)
+[[ -e $HOME/.zsh/extend_path.sh ]] && . $HOME/.zsh/extend_path.sh
+
+MANPATH=/usr/man:/usr/local/man:/opt/git/share/man:
+#==============================  PATH SECTION  ================================#
+
+
+#============================== EXPORTS SECTION ===============================#
+
+tput cols > /dev/null 2>/dev/null || export TERM=xterm
+
+# NP
+# not running keychain as root is done for two reasons:
+# - avoiding the proliferation of agents
+# - reusing the current one held by np
+[ "$USER" = root ] || eval $(keychain -q --eval)
+
+# exports FULLNAME and EMAIL
+[[ -e $HOME/.zsh/fullname.sh ]] && . $HOME/.zsh/fullname.sh
+[[ -e $HOME/.zsh/xdg-basedirs ]] && . $HOME/.zsh/xdg-basedirs
+[[ -e $HOME/.zsh/local/exports.sh ]] && . $HOME/.zsh/local/exports.sh
+[[ -e $HOME/.zsh/local/aliases.zsh ]] && . $HOME/.zsh/local/aliases.zsh
+
+export SHELL=/bin/zsh
+export CVSEDITOR=vim
+export CVS_RSH=ssh
+export LC_ALL=en_US.UTF-8
+export LANGUAGE=$LC_ALL
+export LC_COLLATE=$LC_ALL
+export LC_CTYPE=$LC_ALL
+export LANG=$LC_ALL
+export SCREENDIR=$HOME/tmp
+export MAILADDR="$EMAIL"
+export REALNAME="$FULLEMAIL"
+export FULLEMAIL="$FULLNAME <$EMAIL>"
+export DARCS_EMAIL="$FULLEMAIL"
+export RXVT_SOCKET="$HOME/.urxvt-socket"
+export LESS=XFRf~
+export GREP_OPTIONS='--color=auto'
+export PAGER=less
+export MANPAGER=less
+export BLOCK_SIZE=human-readable
+export REPORTTIME=5 # show statistics about the command if it exceed 5 seconds time
+HISTSIZE=500
+SAVEHIST=0
+LOGCHECK=60
+READNULLCMD=less
+DIRSTACKSIZE=20
+unset VISUAL
+export EDITOR=vim
+export DARCS_EDITOR=vim
+export DARCS_ALWAYS_COLOR=True
+export DARCS_DONT_ESCAPE_8BIT=True
+export DARCS_PAGER=less
+export DARCS_DO_COLOR_LINES=True
+export LS_COLORS='no=00:fi=00:di=0;33:ln=01;36:pi=40;33:so=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.gz=01;31:*.xz=01;31:*.bz2=01;31:*.deb=01;31:*.rpm=01;31:*.jpg=01;35:*.gif=01;35:*.bmp=01;35:*.pgm=01;35:*.pbm=01;35:*.ppm=01;35:*.tga=01;35:*.png=01;35:*.GIF=01;35:*.JPG=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.mpg=01;37:*.avi=01;37:*.gl=01;37:*.dl=01;37:*.mly=01;37:*.mll=01;37:*.mli=01;37:*.ml=01;37:*.mla=01;37:*.cpp=01;37:*.cc=01;37:*.c=01;37:*.hh=01;37:*.h=01;37:*Makefile=4;32:*.pl=4;32:*.sh=4;32:*.ps=01;34:*.pdf=01;34:*TODO=01;37:*TOGO=01;37:*README=01;37:*LINKS=01;37:*.y=01;37:*.l=01;37:*.algo=01;37'
+export QT_IM_MODULE=xim
+export GTK_IM_MODULE=xim
+#============================== EXPORTS SECTION ===============================#
+
+
+#### LS (try to search for GNU ls, mostly useful on Mac)
+LS=ls
+##for x in gnu-ls gls ls; do
+##  $x --color=auto -F >& /dev/null
+##  if [[ $? -eq 0 ]]; then
+##    LS="$x --color=auto -F"
+##    break
+##  fi
+##done
+#### LS
+
+#### DTACH
+export DTACH_REDRAW_METHOD=ctrl_l
+export DTACH_DETACH_KEY='^s'
+export DTACH_DISABLE_SUSPEND_KEY=1
+export DTACH_TPUT_HACK=1
+
+dt() {
+  if [[ ! -z "$DTACH_NAME" ]]; then
+    echo "A dtach session named \`$DTACH_NAME' is already running!" >>/dev/stderr
+    return 1
+  fi
+  local name="$1"
+  shift
+  local zflag=""
+  local sock=~/.dtach/"$name"
+  (( ! DTACH_DISABLE_SUSPEND_KEY )) || zflag="-z"
+  echo "$(date +%FT%TZ): dtach $name $DTACH_TPUT_HACK $DTACH_DISABLE_SUSPEND_KEY $DTACH_DETACH_KEY $DTACH_REDRAW_METHOD $@" >>! ~/log/dtach.log
+  (( ! DTACH_TPUT_HACK )) || tput smkx
+  # pkill -f "dtach -a $sock"
+  if
+    DTACH_NAME="$name" \
+      dtach -a "$sock" \
+            $zflag \
+            -e "${DTACH_DETACH_KEY}" \
+            -r "${DTACH_REDRAW_METHOD}"
+  then :
+  else
+    DTACH_NAME="$name" \
+      dtach -c "$sock" \
+            $zflag \
+            -e "${DTACH_DETACH_KEY}" \
+            -r "${DTACH_REDRAW_METHOD}" \
+            "${@:-zsh}"
+  fi
+  (( ! DTACH_TPUT_HACK )) || tput rmkx
+}
+
+dt2() {
+  DTACH_DETACH_KEY='^\' dt "$@"
+}
+#### DTACH
+
+att() {
+  local topic="$1"
+  case "$topic" in
+    nh|irc|mail|rss) tmux attach-session -d -t "$topic";;
+    *) dt "$topic";;
+  esac
+}
+
+#=============================== ALIAS SECTION ================================#
+alias l="$LS"
+alias ls="$LS"
+alias ll="$LS -l"
+alias la="$LS -a"
+alias lsd="$LS -ld *(-/DN)" # List only directories and symbolic
+                            # links that point to directories
+alias b=beep
+alias v='vim'
+alias reload="exec $SHELL"
+alias mv='nocorrect mv'       # no spelling correction on mv
+alias cp='nocorrect cp'       # no spelling correction on cp
+alias mkdir='nocorrect mkdir' # no spelling correction on mkdir
+alias rh=rehash
+alias dat="date +'%Y-%m-%d'"
+alias -g V='|vless'
+alias -g VE='|& vless'
+alias -g M='|more'
+alias -g ME='|&more'
+alias -g L='|less'
+alias -g LE='|&less'
+alias -g D='|color-diff-less'
+alias -g DE='|&color-diff-less'
+alias -g H='|head'
+alias -g HE='|&head'
+alias -g T='|tail'
+alias -g TE='|&tail'
+# TODO: make asdf,aoeu use loadkeys when not in X
+alias asdf='setxkbmap dvorak; xmodmap ~/.Xmodmap'
+alias aoeu='setxkbmap us; xmodmap ~/.Xmodmap'
+alias nobeep='setterm -blength 0'
+unhash -a -m rm
+#=============================== ALIAS SECTION ================================#
+
+
+#=============================== EDITOR SECTION ===============================#
+bindkey -N viins
+# TODO Visual Mode
+# TODO Better undo
+bindkey "^R" history-incremental-search-backward
+bindkey "^[[A" history-search-backward
+bindkey "^[[B" history-search-forward
+bindkey "^[j" insert-files
+bindkey "^[[4~" end-of-line
+bindkey "^[[1~" beginning-of-line
+bindkey "^[[2~" yank
+bindkey "^[[3~" delete-char
+bindkey "^A" beginning-of-line
+bindkey "^E" end-of-line
+bindkey "\eOc" forward-word
+bindkey "\eOd" backward-word
+#bindkey '^X^Z' universal-argument
+#bindkey '^X^A' vi-find-prev-char-skip
+#bindkey '^Xa' _expand_alias
+#bindkey '^Z' accept-and-hold
+#bindkey -s '\M-/' \\\\
+#bindkey -s '\M-=' \|
+bindkey ' ' magic-space    # also do history expansion on space
+bindkey '^I' complete-word # complete on tab, leave expansion to _expand
+[[ -t 0 ]] && /bin/stty intr  "^C" susp "^Z" dsusp "^Y" stop "^S" start "^Q" kill "^U"  >& /dev/null
+
+if [[ -t 0 ]]; then
+  /bin/stty erase  "^?"
+  # /bin/stty erase  "^H"
+fi
+#=============================== EDITOR SECTION ===============================#
+
+
+#============================== OPTIONS SECTION ===============================#
+setopt correct
+setopt auto_cd
+setopt chase_links
+setopt hist_ignore_dups
+setopt auto_list
+setopt append_history
+setopt auto_param_keys
+setopt no_beep
+setopt complete_aliases
+setopt equals
+setopt extended_glob
+setopt hash_cmds
+setopt hash_dirs
+setopt mail_warning
+setopt magic_equal_subst
+setopt numericglobsort
+setopt complete_in_word
+setopt notify globdots pushdtohome autolist
+setopt rec_exact longlistjobs # correctall
+setopt autoresume histignoredups pushdsilent no_clobber
+setopt autopushd pushdminus rcquotes mailwarning
+setopt interactive_comments
+unsetopt bgnice autoparamslash
+#============================== OPTIONS SECTION ===============================#
+
+# Setup new style completion system. To see examples of the old style (compctl
+# based) programmable completion, check Misc/compctl-examples in the zsh
+# distribution.
+autoload -U compinit promptinit
+compinit
+promptinit
+autoload mere zed zfinit
+autoload -U history-search-end
+autoload nslookup
+autoload incremental-complete-word
+autoload insert-files
+autoload zmv
+zmodload zsh/complist
+zle -N history-beginning-search-backward-end history-search-end
+zle -N history-beginning-search-forward-end history-search-end
+zle -N incremental-complete-word
+zle -N insert-files
+zmodload -a zsh/stat stat
+zmodload -a zsh/zpty zpty
+zmodload -a zsh/zprof zprof
+zmodload -ap zsh/mapfile mapfile
+
+
+#============================= COMPLETION SECTION =============================#
+function comp_known_hosts () {
+reply=($(ruby -e 'ARGF.each { |l| l.gsub!(/^([^,\s]*).*$/, %q{\1}); puts l if l =~ '"/$1/ }" ~/.ssh/known_hosts 2>/dev/null))
+}
+#
+#  :completion:<func>:<completer>:<command>:<argument>:<tag>
+#
+zstyle ':completion:*' auto-description 'specify: %d'
+zstyle ':completion:*::::' completer _expand _complete _match _ignored _approximate _prefix
+zstyle ':completion:*:(correct|approximate):*' accept 2 numeric
+zstyle -e ':completion:*:approximate:*' max-errors \
+    'reply=( $(( ($#PREFIX+$#SUFFIX)/3 )) numeric )'
+zstyle ':completion:incremental:*' list yes
+zstyle ':completion:*:expand:*' tag-order all-expansions
+zstyle ':completion:*' format '[32m-=> [01m%d[0m'
+zstyle ':completion:*' verbose yes
+zstyle ':completion:*:descriptions' format '%B%d%b'
+zstyle ':completion:*:messages' format '%d'
+zstyle ':completion:*:warnings' format 'No matches for: %d'
+zstyle ':completion:*:corrections' format '%B%d (errors: %e)%b'
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' insert-unambiguous true
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'l:|=* r:|=*' 'r:|[._-]=* r:|=*'
+	#zstyle ':completion:*' matcher-list '' '' '' 'r:|[._-]=** r:|=**'
+zstyle ':completion:*' menu select=5
+zstyle ':completion:*' original true
+zstyle ':completion:*' squeeze-slashes true
+zstyle ':completion:*:ps' list-arguments -U$USER -opid,ppid,pcpu,pmem,wchan,time,args --sort pcpu
+zstyle ':completion:*:processes' list-colors '=(#b)(?????)(#B)?????????????????????????????????([^ ]#/)#(#b)([^ /]#)*=00=01;31=01;33'
+zstyle ':completion:*:urls' local 'www' '/var/www/htdocs' 'public_html'
+zstyle -e ':completion:*:ssh:*' hosts comp_known_hosts
+zstyle -e ':completion:*:scp:*' hosts comp_known_hosts
+zstyle -e ':completion:*:sftp:*' hosts comp_known_hosts
+zstyle -e ':completion:*:rsync:*' hosts comp_known_hosts
+zstyle -e ':completion:*:nc:*' hosts comp_known_hosts
+zstyle -e ':completion:*:nc6:*' hosts comp_known_hosts
+zstyle ':completion:*:functions' ignored-patterns '_*'
+zstyle ':completion:*:*:-subscript-:*' tag-order indexes parameters
+
+[[ -e $HOME/.zsh/rake_completion.zsh ]] && . $HOME/.zsh/rake_completion.zsh
+#============================= COMPLETION SECTION =============================#
+
+[[ -e /etc/profile.d/prll.sh ]] && . /etc/profile.d/prll.sh
+[[ -e /etc/profile.d/perlbin.sh ]] && . /etc/profile.d/perlbin.sh
+
+[[ -e $HOME/.zsh/prompt.zsh ]] && . $HOME/.zsh/prompt.zsh
+
+# Beep on the screen to get my attention.
+# Particularly useful when a tool like 'mr' spawns a sub-shell.
+printf '\a'
+
+TOPIC="${TOPIC:-$SCREEN_TO_OPEN}"
+unset SCREEN_TO_OPEN
+
+if [[ ! -z "$TOPIC" ]]; then
+  local_TOPIC="$TOPIC"
+  unset TOPIC
+  att "$local_TOPIC"
+fi

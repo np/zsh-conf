@@ -1,0 +1,3 @@
+export XDG_CONFIG_HOME=$HOME/conf
+export XDG_DATA_HOME=$HOME/private
+export XDG_CACHE_HOME=$HOME/local/cache
