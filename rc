@@ -112,21 +112,12 @@ dt() {
   echo "$(date +%FT%TZ): dtach $name $DTACH_TPUT_HACK $DTACH_DISABLE_SUSPEND_KEY $DTACH_DETACH_KEY $DTACH_REDRAW_METHOD $@" >>! ~/log/dtach.log
   (( ! DTACH_TPUT_HACK )) || tput smkx
   # pkill -f "dtach -a $sock"
-  if
-    DTACH_NAME="$name" \
-      dtach -a "$sock" \
-            $zflag \
-            -e "${DTACH_DETACH_KEY}" \
-            -r "${DTACH_REDRAW_METHOD}"
-  then :
-  else
-    DTACH_NAME="$name" \
-      dtach -c "$sock" \
-            $zflag \
-            -e "${DTACH_DETACH_KEY}" \
-            -r "${DTACH_REDRAW_METHOD}" \
-            "${@:-zsh}"
-  fi
+  DTACH_NAME="$name" \
+    dtach -A "$sock" \
+          $zflag \
+          -e "${DTACH_DETACH_KEY}" \
+          -r "${DTACH_REDRAW_METHOD}" \
+          "${@:-zsh}"
   (( ! DTACH_TPUT_HACK )) || tput rmkx
 }
 
