@@ -82,16 +82,15 @@ export GTK_IM_MODULE=xim
 #============================== EXPORTS SECTION ===============================#
 
 
-#### LS (try to search for GNU ls, mostly useful on Mac)
-LS=ls
+#### LS (try to search for GNU ls, mostly useful on Mac) {{{1
+LS='ls --color=auto -F'
 ##for x in gnu-ls gls ls; do
-##  $x --color=auto -F >& /dev/null
-##  if [[ $? -eq 0 ]]; then
+##  if $x --color=auto -F >& /dev/null; then
 ##    LS="$x --color=auto -F"
 ##    break
 ##  fi
 ##done
-#### LS
+#### }}}
 
 #### DTACH
 export DTACH_REDRAW_METHOD=ctrl_l
